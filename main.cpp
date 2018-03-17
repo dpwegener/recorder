@@ -105,12 +105,6 @@ class Processor {
 public:
     Processor(Recorder & recorder, Service & service) : recorder_(recorder), service_(service) {}
 
-    void process(std::vector<Event> & eventList) {
-        for (auto event: eventList) {
-            process(event);
-        }
-    }
-
     void process(Event const & event) {
         switch (event.id_) {
             case EventType::MEET :
@@ -156,8 +150,9 @@ int main(int, char**) {
     eventList.emplace_back(EventType::INTRODUCE, "Hosehead");
     eventList.emplace_back(EventType::IGNORE, "Someone I don't know");
 
-    theProcessor.process(eventList);
-
+    for (auto event: eventList) {
+        theProcessor.process(event);
+    }
 
     theProcessor.process(Event(EventType::MEET, "Friend1"));
     theProcessor.process(Event(EventType::MEET, "Friend2"));
