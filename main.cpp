@@ -1,3 +1,4 @@
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -16,6 +17,8 @@ public:
     const std::string details_;
 };
 
+using NewName = std::function<void (std::string const & name)>;
+using Introduction = std::function<void (std::string const & stranger, std::string const & acquantience)>;
 // Record event details
 class Recorder {
 public:
@@ -70,22 +73,28 @@ private:
     void const * previousDataPtr_;
 };
 
+struct RecorderCallbacks {
+    NewName newName_;
+    Introduction introduction_;
+};
+
 // Handle events
 class Service {
 public:
-    Service(Recorder & recorder) : recorder_(recorder) {}
+    Service(RecorderCallbacks const & callbacks) : callbacks_(callbacks) {}
 
     void handleOne(Event const & event) {
         friends_.push_back(event.details_);
         std::cout << "Pleasure to meet you " << event.details_ << '\n';
-        recorder_.recordNewName(event.details_);
+        //recorder_.recordNewName(event.details_);
+        callbacks_.newName_(event.details_);
     }
 
     void handleTwo(Event const & event) {
         std::cout << event.details_ << ", please meet my friends\n";
 
         for (auto name: friends_) {
-            recorder_.recordIntroduction(event.details_, name);
+            callbacks_.introduction_(event.details_, name);
         }
     }
 
@@ -95,7 +104,7 @@ public:
 
 
 private:
-    Recorder & recorder_;
+    RecorderCallbacks const & callbacks_;
     std::vector<std::string> friends_;
 };
 
@@ -141,7 +150,12 @@ private:
 int main(int, char**) {
     std::cout << "Hello, world!\n";
     Recorder theRecorder;
-    Service aService(theRecorder);
+    RecorderCallbacks callbacks;
+    callbacks.newName_ =  [&theRecorder] (std::string const & name){theRecorder.recordNewName(name);};
+    callbacks.introduction_ = [&theRecorder] (std::string const & stranger, std::string const & acquantience) {
+        theRecorder.recordIntroduction(stranger, acquantience);
+    };
+    Service aService(callbacks);
     Processor theProcessor(theRecorder, aService);
 
     std::vector<Event> eventList;
